@@ -10,6 +10,19 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
   console.warn('   The application will use placeholder values and may not function correctly.');
 }
 
+// Create a custom Supabase client that can be used with Clerk authentication
+function createClerkSupabaseClient(clerkToken = null, serviceKey = null) {
+  const key = serviceKey || supabaseKey;
+  return createClient(supabaseUrl, key, {
+    global: {
+      headers: clerkToken ? {
+        Authorization: `Bearer ${clerkToken}`
+      } : {}
+    }
+  });
+}
+
+// Default client for non-authenticated requests
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-module.exports = supabase; 
+module.exports = { supabase, createClerkSupabaseClient }; 

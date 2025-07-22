@@ -1,30 +1,35 @@
-require('dotenv').config();
+// backend/middleware/auth.js
 
+require("dotenv").config();
 const { verifyToken } = require('@clerk/backend');
 
+/**
+ * Secure authentication middleware for Clerk.
+ * Verifies the JWT from the Authorization header to protect routes.
+ */
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ message: 'No token, authorization denied' });
+    const authHeader = req.header('Authorization');
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No Authorization header' });
     }
 
-    if (!process.env.CLERK_JWT_KEY || !process.env.CLERK_ISSUER_URL) {
-      console.warn('⚠️  Missing Clerk environment variables. Please set CLERK_JWT_KEY and CLERK_ISSUER_URL in your .env file.');
-      return res.status(500).json({ message: 'Authentication service not configured' });
-    }
+    const token = authHeader.replace('Bearer ', '');
 
+    // Use the simpler Clerk verification method
     const payload = await verifyToken(token, {
-      jwtKey: process.env.CLERK_JWT_KEY,
-      issuer: process.env.CLERK_ISSUER_URL
+      jwtKey: process.env.CLERK_JWT_KEY
     });
 
-    req.user = {
-      id: payload.sub,
+    // Attach the user's ID to the request object
+    req.user = { 
+      id: payload.sub, // 'sub' is the standard JWT claim for user ID
       email: payload.email,
-      username: payload.username || payload.email?.split('@')[0]
+      username: payload.username
     };
+    
+    // Attach the Clerk token for Supabase integration
+    req.clerkToken = token;
     
     next();
   } catch (error) {
@@ -33,4 +38,4 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = auth; 
+module.exports = auth;

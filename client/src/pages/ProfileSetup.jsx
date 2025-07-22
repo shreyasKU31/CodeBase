@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@/hooks/useUser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,12 +11,39 @@ import { Upload, User } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 const ProfileSetup = () => {
-  const { user } = useAuth()
+  const { user: clerkUser, isLoaded, session } = useAuth()
+  const { user, syncUserToSupabase } = useUser()
   const navigate = useNavigate()
+  
+  // Show loading if Clerk is not loaded yet
+  if (!isLoaded) {
+    return <LoadingSpinner />
+  }
+  
+  // Show loading if session is not available yet (common after sign-up)
+  if (!session || !clerkUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">Setting Up Your Profile</CardTitle>
+            <CardDescription>
+              Please wait while we prepare your account...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <LoadingSpinner />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    displayName: user?.fullName || '',
-    username: user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || '',
+    displayName: (clerkUser?.firstName && clerkUser?.lastName) 
+      ? `${clerkUser.firstName} ${clerkUser.lastName}` 
+      : clerkUser?.firstName || clerkUser?.lastName || '',
+    username: clerkUser?.username || clerkUser?.primaryEmailAddress?.emailAddress?.split('@')[0] || '',
     headline: '',
     location: '',
     bio: '',
@@ -48,35 +76,53 @@ const ProfileSetup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.displayName.trim() || !formData.username.trim()) {
+      alert('Display Name and Username are required fields')
+      return
+    }
+    
+    // Check if session is available
+    if (!session) {
+      alert('Please wait for your session to load. This usually takes a few seconds after signing up.')
+      return
+    }
+    
     setLoading(true)
 
     try {
-      const token = await user.getToken()
-      const formDataToSend = new FormData()
-      
-      // Add form fields
-      Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key])
-      })
-      
-      // Add profile picture if selected
-      if (profilePicture) {
-        formDataToSend.append('image', profilePicture)
+      // Prepare user data for Supabase
+      const userData = {
+        display_name: formData.displayName.trim(),
+        username: formData.username.trim(),
+        headline: formData.headline.trim(),
+        location: formData.location.trim(),
+        bio: formData.bio.trim(),
+        github_url: formData.githubUrl.trim(),
+        linkedin_url: formData.linkedinUrl.trim(),
+        website_url: formData.websiteUrl.trim(),
+        email: clerkUser?.primaryEmailAddress?.emailAddress || ''
       }
 
-      const response = await fetch('/api/users/profile', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataToSend
-      })
+      // If profile picture is selected, convert to base64
+      if (profilePicture) {
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(profilePicture)
+        })
+        userData.profile_picture = base64
+      }
 
-      if (response.ok) {
+      // Sync user data to Supabase
+      const result = await syncUserToSupabase(userData)
+
+      if (result.success) {
         navigate('/dashboard')
       } else {
-        const error = await response.json()
-        alert(error.message || 'Failed to create profile')
+        console.error('Profile sync failed:', result.error)
+        alert('Failed to create profile: ' + (result.error?.message || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error creating profile:', error)
@@ -92,7 +138,7 @@ const ProfileSetup = () => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
           <CardDescription>
-            Set up your profile to start showcasing your projects on DevHance
+            Profile setup is required to access DevHance. Please complete your profile to continue.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -123,6 +169,11 @@ const ProfileSetup = () => {
 
             {/* Required Fields */}
             <div className="space-y-4">
+              <div className="bg-muted p-3 rounded-lg mb-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Required:</strong> Display Name and Username are mandatory to complete your profile setup.
+                </p>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Display Name *

@@ -11,12 +11,17 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 const ProjectDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, isSignedIn } = useAuth()
+  const { user, isSignedIn, isLoaded, session } = useAuth()
   const [project, setProject] = useState(null)
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('Auth state:', { isSignedIn, isLoaded, hasUser: !!user })
+  }, [isSignedIn, isLoaded, user])
 
   useEffect(() => {
     fetchProject()
@@ -25,9 +30,10 @@ const ProjectDetail = () => {
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`/api/projects/${id}`)
+      const response = await fetch(`http://localhost:5000/api/projects/${id}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('Project data:', data)
         setProject(data)
       } else {
         navigate('/dashboard')
@@ -42,7 +48,7 @@ const ProjectDetail = () => {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/projects/${id}/comments`)
+      const response = await fetch(`http://localhost:5000/api/projects/${id}/comments`)
       if (response.ok) {
         const data = await response.json()
         setComments(data)
@@ -53,23 +59,40 @@ const ProjectDetail = () => {
   }
 
   const handleLike = async () => {
-    if (!isSignedIn) return
+    if (!isSignedIn || !session) {
+      console.log('User not signed in or session not available')
+      return
+    }
 
     try {
-      const token = await user.getToken()
-      const response = await fetch(`/api/projects/${id}/like`, {
+      console.log('Attempting to like project...')
+      const token = await session.getToken()
+      
+      if (!token) {
+        console.error('No session token available for like')
+        return
+      }
+      console.log('Token obtained:', !!token)
+      
+      const response = await fetch(`http://localhost:5000/api/projects/${id}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       
+      console.log('Like response status:', response.status)
+      
       if (response.ok) {
         // Update the project like count
         setProject(prev => ({
           ...prev,
-          likeCount: prev.likeCount + 1
+          likeCount: (prev.likeCount || 0) + 1
         }))
+        console.log('Project liked successfully')
+      } else {
+        const errorData = await response.json()
+        console.error('Like failed:', errorData)
       }
     } catch (error) {
       console.error('Error liking project:', error)
@@ -78,12 +101,28 @@ const ProjectDetail = () => {
 
   const handleComment = async (e) => {
     e.preventDefault()
-    if (!commentText.trim() || !isSignedIn) return
+    if (!commentText.trim() || !isSignedIn || !session) {
+      console.log('Cannot comment:', { 
+        hasText: !!commentText.trim(), 
+        isSignedIn, 
+        hasSession: !!session 
+      })
+      return
+    }
 
     setSubmittingComment(true)
     try {
-      const token = await user.getToken()
-      const response = await fetch(`/api/projects/${id}/comments`, {
+      const token = await session.getToken()
+      
+      if (!token) {
+        console.error('No session token available for comment')
+        setSubmittingComment(false)
+        return
+      }
+      console.log('Attempting to post comment...')
+      console.log('Token obtained for comment:', !!token)
+      
+      const response = await fetch(`http://localhost:5000/api/projects/${id}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -92,10 +131,16 @@ const ProjectDetail = () => {
         body: JSON.stringify({ text: commentText })
       })
       
+      console.log('Comment response status:', response.status)
+      
       if (response.ok) {
         const newComment = await response.json()
         setComments(prev => [newComment, ...prev])
         setCommentText('')
+        console.log('Comment posted successfully')
+      } else {
+        const errorData = await response.json()
+        console.error('Comment failed:', errorData)
       }
     } catch (error) {
       console.error('Error adding comment:', error)
@@ -104,7 +149,7 @@ const ProjectDetail = () => {
     }
   }
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return <LoadingSpinner />
   }
 
@@ -129,15 +174,15 @@ const ProjectDetail = () => {
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={project.users?.profile_picture} />
+              <AvatarImage src={project.author?.profile_picture} />
               <AvatarFallback>
-                {project.users?.display_name?.charAt(0) || 'U'}
+                {project.author?.display_name?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-lg font-medium">{project.users?.display_name}</h2>
+              <h2 className="text-lg font-medium">{project.author?.display_name}</h2>
               <p className="text-sm text-muted-foreground">
-                {project.users?.headline} • {project.users?.location}
+                {project.author?.headline} • {project.author?.location}
               </p>
             </div>
           </div>
@@ -353,7 +398,13 @@ const ProjectDetail = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => navigate(`/user/${project.users?.username}`)}
+                  onClick={() => {
+                    if (project.author?.username) {
+                      navigate(`/user/${project.author.username}`)
+                    } else {
+                      console.error('No username available for author:', project.author)
+                    }
+                  }}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   View Profile
