@@ -1,0 +1,23 @@
+{
+  "name": "devhance",
+  "version": "1.0.0",
+  "description": "A platform for developers to showcase their projects and build their careers",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "build:server": "cd server && npm install --production",
+    "start": "cd server && npm start",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "deploy:vercel": "cd client && vercel --prod",
+    "deploy:netlify": "cd client && netlify deploy --prod --dir=dist"
+  },
+  "keywords": ["portfolio", "developer", "projects", "mern"],
+  "author": "DevHance Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
