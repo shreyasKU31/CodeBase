@@ -7,19 +7,45 @@ import { Plus, Edit, Trash2, ExternalLink } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 const MyProjects = () => {
-  const { user } = useAuth()
+  const { user, isLoaded, isSignedIn, session } = useAuth()
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchMyProjects()
-  }, [])
+    if (isLoaded && isSignedIn && session) {
+      fetchMyProjects()
+    } else if (isLoaded && isSignedIn && !session) {
+      // If session is not available after 5 seconds, skip fetching
+      const timer = setTimeout(() => {
+        if (!session) {
+          console.warn('Session not available, skipping project fetch')
+          setLoading(false)
+        }
+      }, 5000)
+      
+      return () => clearTimeout(timer)
+    } else if (isLoaded && !isSignedIn) {
+      navigate('/')
+    }
+  }, [isLoaded, isSignedIn, session, navigate])
 
   const fetchMyProjects = async () => {
+    if (!session) {
+      console.warn('Session not available, cannot fetch projects')
+      setLoading(false)
+      return
+    }
+
     try {
-      const token = await user.getToken()
-      const response = await fetch('/api/projects/my-projects', {
+      const token = await session.getToken()
+      
+      if (!token) {
+        console.error('No session token available for fetching projects')
+        setLoading(false)
+        return
+      }
+      const response = await fetch('http://localhost:5000/api/projects/my-projects', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -28,6 +54,8 @@ const MyProjects = () => {
       if (response.ok) {
         const data = await response.json()
         setProjects(data)
+      } else {
+        console.error('Failed to fetch projects:', response.status)
       }
     } catch (error) {
       console.error('Error fetching projects:', error)
@@ -37,11 +65,21 @@ const MyProjects = () => {
   }
 
   const handleDeleteProject = async (projectId) => {
+    if (!session) {
+      alert('Please wait for your session to load before deleting projects')
+      return
+    }
+
     if (!confirm('Are you sure you want to delete this project?')) return
 
     try {
-      const token = await user.getToken()
-      const response = await fetch(`/api/projects/${projectId}`, {
+      const token = await session.getToken()
+      
+      if (!token) {
+        console.error('No session token available for deleting project')
+        return
+      }
+      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -59,8 +97,15 @@ const MyProjects = () => {
     }
   }
 
-  if (loading) {
+  // Show loading while Clerk is loading or projects are loading
+  if (!isLoaded || loading) {
     return <LoadingSpinner />
+  }
+
+  // If not signed in, redirect to landing page
+  if (!isSignedIn) {
+    navigate('/')
+    return null
   }
 
   return (

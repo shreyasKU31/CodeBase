@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@/hooks/useUser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, X, Upload } from 'lucide-react'
+import { Plus, X, Upload, User } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 const AddProject = () => {
-  const { user, isLoaded, isSignedIn } = useAuth()
+  // 1. Get all the necessary flags and objects from useAuth
+  const { user: clerkUser, isSignedIn, isLoaded, session } = useAuth()
+  const { user } = useUser()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -26,25 +30,16 @@ const AddProject = () => {
   const [images, setImages] = useState([])
   const [imagePreviews, setImagePreviews] = useState([])
 
-  // Show loading spinner while Clerk is loading
+  // 2. The Golden Rule: Wait for Clerk to be fully loaded
   if (!isLoaded) {
     return <LoadingSpinner />
   }
 
-  // If user is signed in but user object is not available, show a message
-  if (isSignedIn && !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Loading your profile...</h2>
-          <p className="text-muted-foreground mb-4">Please wait while we set up your account</p>
-          <LoadingSpinner />
-        </div>
-      </div>
-    )
+  // 3. Redirect if not signed in
+  if (!isSignedIn) {
+    navigate('/')
+    return null
   }
-
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -76,15 +71,22 @@ const AddProject = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!user) {
-      alert('Please sign in to create a project')
+    // 4. Securely get the JWT from Clerk session
+    if (!session) {
+      alert('Session not available. Please refresh the page and try again.')
+      return
+    }
+    
+    const token = await session.getToken()
+    
+    if (!token) {
+      alert('No authentication token available. Please refresh the page and try again.')
       return
     }
     
     setLoading(true)
 
     try {
-      const token = await user.getToken()
       const formDataToSend = new FormData()
       
       // Add form fields
@@ -105,7 +107,8 @@ const AddProject = () => {
         formDataToSend.append('images', image)
       })
 
-      const response = await fetch('/api/projects', {
+      // 5. Make an authenticated API call to your backend
+      const response = await fetch('http://localhost:5000/api/projects', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,6 +134,26 @@ const AddProject = () => {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* User Info Header */}
+        {user && (
+          <div className="mb-8 p-4 bg-primary/5 rounded-lg border">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.profile_picture} />
+                <AvatarFallback>
+                  <User className="h-6 w-6" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-semibold">Creating project as {user.display_name}</h3>
+                {user.headline && (
+                  <p className="text-sm text-muted-foreground">{user.headline}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Add New Project</h1>
           <p className="text-muted-foreground">

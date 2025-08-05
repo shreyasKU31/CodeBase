@@ -1,55 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useAuth, UserButton } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@/hooks/useUser'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Plus, Heart, MessageCircle, ExternalLink } from 'lucide-react'
+import { Plus, Heart, MessageCircle, ExternalLink, User } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
-
 const Dashboard = () => {
-  const { user, isLoaded, isSignedIn } = useAuth()
+  const { user: clerkUser, isSignedIn, session } = useAuth()
+  const { user } = useUser()
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
-  const [userProfile, setUserProfile] = useState(null)
-
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
-      checkUserProfile()
-    }
-  }, [isLoaded, isSignedIn, user])
-
-  // Handle case where user is signed in but user object is not available
-  useEffect(() => {
-    if (isLoaded && isSignedIn && !user) {
-      // Wait a bit for the user object to load
-      const timer = setTimeout(() => {
-        if (isSignedIn && !user) {
-          // Force a re-render to check again
-          setProjects(prev => [...prev])
-        }
-      }, 1000)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [isLoaded, isSignedIn, user])
-
-
-
-
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects/discover')
+      const response = await fetch('http://localhost:5000/api/projects/discover')
       if (response.ok) {
         const data = await response.json()
-        setProjects(data)
+        // Sort projects by like count (highest first)
+        const sortedProjects = data.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+        setProjects(sortedProjects)
+      } else {
+        console.error('Failed to fetch projects:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error fetching projects:', error)
@@ -58,40 +33,25 @@ const Dashboard = () => {
     }
   }
 
-  const checkUserProfile = async () => {
-    if (!user) {
-      return
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchProjects()
     }
-    
-    try {
-      const token = await user.getToken()
-      const response = await fetch('/api/users/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const profile = await response.json()
-        setUserProfile(profile)
-        if (!profile.is_profile_complete) {
-          navigate('/profile-setup')
-        }
-      } else if (response.status === 404) {
-        navigate('/profile-setup')
-      }
-    } catch (error) {
-      console.error('Error checking profile:', error)
-    }
-  }
+  }, [isSignedIn])
 
   const handleLike = async (projectId) => {
-    if (!user) {
+    if (!session) {
       return
     }
     
     try {
-      const token = await user.getToken()
+      const token = await session.getToken()
+      
+      if (!token) {
+        console.error('No session token available for like')
+        return
+      }
+      
       const response = await fetch(`/api/projects/${projectId}/like`, {
         method: 'POST',
         headers: {
@@ -116,18 +76,13 @@ const Dashboard = () => {
     }
   }
 
-  // Show loading spinner while Clerk is loading or projects are loading
-  if (!isLoaded || loading) {
-    return <LoadingSpinner />
-  }
-
-  // If user is signed in but user object is not available, show a message instead of infinite loading
-  if (isSignedIn && !user) {
+  // Show loading while fetching projects
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Loading your profile...</h2>
-          <p className="text-muted-foreground mb-4">This might take a moment</p>
+          <h2 className="text-2xl font-bold mb-4">Loading dashboard...</h2>
+          <p className="text-muted-foreground mb-4">Please wait while we load your projects</p>
           <LoadingSpinner />
         </div>
       </div>
@@ -143,7 +98,11 @@ const Dashboard = () => {
             <span className="text-2xl font-bold text-primary">DevHance</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={() => navigate('/add-project')}>
+            <Button 
+              onClick={() => navigate('/add-project')}
+              disabled={!clerkUser}
+              title={!clerkUser ? "Please wait for authentication to load" : "Add a new project"}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Project
             </Button>
@@ -152,17 +111,41 @@ const Dashboard = () => {
         </div>
       </nav>
 
-             {/* Main Content */}
-               <div className="container mx-auto px-4 py-8">
-         
-         <div className="flex items-center justify-between mb-8">
-           <h1 className="text-3xl font-bold">Discover Projects</h1>
-           <div className="flex space-x-2">
-             <Button variant="outline" onClick={() => navigate('/my-projects')}>
-               My Projects
-             </Button>
-           </div>
-         </div>
+      {/* User Welcome Section */}
+      {user && (
+        <div className="bg-primary/5 border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.profile_picture} />
+                <AvatarFallback>
+                  <User className="h-8 w-8" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold">Welcome back, {user.display_name}!</h2>
+                {user.headline && (
+                  <p className="text-muted-foreground">{user.headline}</p>
+                )}
+                {user.location && (
+                  <p className="text-sm text-muted-foreground">{user.location}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Discover Projects</h1>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => navigate('/my-projects')}>
+              My Projects
+            </Button>
+          </div>
+        </div>
 
         {/* Projects Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -187,13 +170,13 @@ const Dashboard = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-center space-x-2 mb-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={project.users?.profile_picture} />
+                    <AvatarImage src={project.author?.profile_picture} />
                     <AvatarFallback>
-                      {project.users?.display_name?.charAt(0) || 'U'}
+                      {project.author?.display_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">
-                    {project.users?.display_name || 'Unknown'}
+                    {project.author?.display_name || 'Unknown'}
                   </span>
                 </div>
                 <CardTitle className="text-lg">{project.title}</CardTitle>

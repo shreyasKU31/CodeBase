@@ -1,12 +1,25 @@
--- DevHance Database Schema
--- Complete and correct schema for Clerk integration
+-- DevHance Database Reset Script
+-- Run this in your Supabase SQL Editor to completely reset and recreate the database
 
+-- WARNING: This will delete ALL existing data!
+-- Only run this if you want to start fresh
+
+-- Step 1: Drop all existing tables (in correct order due to foreign key constraints)
+DROP TABLE IF EXISTS project_comments CASCADE;
+DROP TABLE IF EXISTS project_likes CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Step 2: Drop the trigger function
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+-- Step 3: Recreate everything with the correct schema
 -- Enable UUID extension for project IDs
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. USERS TABLE
 -- Correctly designed for Clerk user IDs (TEXT format)
-CREATE TABLE IF NOT EXISTS public.users (
+CREATE TABLE public.users (
     id TEXT PRIMARY KEY NOT NULL, -- Clerk user ID (e.g., user_30pGOUBT2PwJ6LSaeV525hkXqLj)
     username VARCHAR(30) UNIQUE NOT NULL,
     display_name VARCHAR(50) NOT NULL,
@@ -24,7 +37,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- 2. PROJECTS TABLE
-CREATE TABLE IF NOT EXISTS public.projects (
+CREATE TABLE public.projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
@@ -46,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
 );
 
 -- 3. PROJECT LIKES TABLE
-CREATE TABLE IF NOT EXISTS public.project_likes (
+CREATE TABLE public.project_likes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Links to Clerk user ID
@@ -55,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.project_likes (
 );
 
 -- 4. PROJECT COMMENTS TABLE
-CREATE TABLE IF NOT EXISTS public.project_comments (
+CREATE TABLE public.project_comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Links to Clerk user ID
@@ -65,12 +78,12 @@ CREATE TABLE IF NOT EXISTS public.project_comments (
 );
 
 -- 5. INDEXES for performance
-CREATE INDEX IF NOT EXISTS idx_projects_author ON projects(author);
-CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at);
-CREATE INDEX IF NOT EXISTS idx_project_likes_project_id ON project_likes(project_id);
-CREATE INDEX IF NOT EXISTS idx_project_comments_project_id ON project_comments(project_id);
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX idx_projects_author ON projects(author);
+CREATE INDEX idx_projects_created_at ON projects(created_at);
+CREATE INDEX idx_project_likes_project_id ON project_likes(project_id);
+CREATE INDEX idx_project_comments_project_id ON project_comments(project_id);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
 
 -- 6. TRIGGER FUNCTION to automatically update 'updated_at' timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -82,47 +95,27 @@ END;
 $$ language 'plpgsql';
 
 -- Apply triggers to tables
-DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_project_comments_updated_at ON project_comments;
 CREATE TRIGGER update_project_comments_updated_at BEFORE UPDATE ON project_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 7. ROW LEVEL SECURITY (RLS) - DISABLED for Clerk integration
--- Since we're using Clerk for authentication, we'll handle authorization in our application logic
--- rather than relying on Supabase RLS policies
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
 ALTER TABLE project_likes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE project_comments DISABLE ROW LEVEL SECURITY;
 
--- 8. SAMPLE DATA (Optional - for testing)
--- Uncomment the following lines if you want to add sample data for testing
+-- 8. Verify the schema
+SELECT 
+    table_name,
+    column_name, 
+    data_type, 
+    is_nullable,
+    column_default
+FROM information_schema.columns 
+WHERE table_schema = 'public' 
+AND table_name IN ('users', 'projects', 'project_likes', 'project_comments')
+ORDER BY table_name, ordinal_position;
 
-/*
--- Sample user (replace with actual Clerk user ID)
-INSERT INTO users (id, username, display_name, email, headline, is_profile_complete) 
-VALUES (
-    'user_sample123', 
-    'sample_user', 
-    'Sample User', 
-    'sample@example.com', 
-    'Full Stack Developer',
-    true
-) ON CONFLICT (id) DO NOTHING;
-
--- Sample project
-INSERT INTO projects (title, description, story, thumbnail, author, tech_stack, tags) 
-VALUES (
-    'Sample Project',
-    'A sample project for testing',
-    'This is a sample project story for testing purposes.',
-    'https://via.placeholder.com/400x300',
-    'user_sample123',
-    ARRAY['React', 'Node.js', 'PostgreSQL'],
-    ARRAY['web-app', 'fullstack', 'portfolio']
-) ON CONFLICT DO NOTHING;
-*/
+-- Success message
+SELECT 'Database reset completed successfully! All tables recreated with correct schema.' as status; 

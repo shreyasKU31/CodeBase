@@ -19,8 +19,14 @@ const UserProfile = () => {
   }, [username])
 
   const fetchUserProfile = async () => {
+    if (!username) {
+      setLoading(false)
+      navigate('/dashboard')
+      return
+    }
+
     try {
-      const response = await fetch(`/api/users/${username}`)
+      const response = await fetch(`http://localhost:5000/api/users/${username}`)
       if (response.ok) {
         const data = await response.json()
         setUser(data)
@@ -36,8 +42,10 @@ const UserProfile = () => {
   }
 
   const fetchUserProjects = async () => {
+    if (!username) return
+
     try {
-      const response = await fetch(`/api/users/${username}/projects`)
+      const response = await fetch(`http://localhost:5000/api/users/${username}/projects`)
       if (response.ok) {
         const data = await response.json()
         setProjects(data)
