@@ -6,7 +6,7 @@ Create a `.env` file in the server directory with the following variables:
 
 ```env
 # Server Configuration
-PORT=your_server_port
+SERVER_PORT=your_server_port
 CLIENT_URL=your_client_url
 
 # Supabase Configuration

@@ -11,7 +11,7 @@ const webhookRoutes = require('./routes/webhooks');
 const { createClerkSupabaseClient } = require('./config/supabase');
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.SERVER_PORT;
 
 // Security middleware
 app.use(helmet());

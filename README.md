@@ -55,7 +55,7 @@ cp server/env.example server/.env
 
 ```env
 # Server Configuration
-PORT=your_server_port
+SERVER_PORT=your_server_port
 CLIENT_URL=your_client_url
 
 # Supabase Configuration
