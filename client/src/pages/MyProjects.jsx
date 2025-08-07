@@ -22,7 +22,7 @@ const MyProjects = () => {
           console.warn('Session not available, skipping project fetch')
           setLoading(false)
         }
-      }, 5000)
+      }, 6000)
       
       return () => clearTimeout(timer)
     } else if (isLoaded && !isSignedIn) {

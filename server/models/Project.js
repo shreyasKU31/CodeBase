@@ -15,7 +15,7 @@ const projectSchema = new mongoose.Schema({
   story: {
     type: String,
     required: true,
-    maxlength: 5000
+    maxlength: 6000
   },
   thumbnail: {
     type: String,

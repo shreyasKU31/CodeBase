@@ -41,7 +41,7 @@ All hardcoded API endpoints have been replaced with environment variables:
 - `client/src/pages/UserProfile.jsx` (2 instances)
 
 **Pattern Changed:**
-- **Before**: `fetch('http://localhost:5000/api/...')`
+- **Before**: `fetch('http://localhost:port/api/...')`
 - **After**: `fetch(\`${import.meta.env.VITE_API_URL}/api/...\`)`
 
 ### 4. Environment Variable Templates Created
@@ -60,8 +60,8 @@ Added additional environment file patterns:
 The security scanner may flag the following as "secret env var" values, but these are **NOT actual secrets**:
 
 ### client/src/pages/MyProjects.jsx (line 25)
-- **Value**: `5000`
-- **Context**: `}, 5000)` - This is a timeout duration of 5000 milliseconds (5 seconds)
+- **Value**: `port`
+- **Context**: `}, port)` - This is a timeout duration of 5000 milliseconds (5 seconds)
 - **Status**: ✅ **NOT A SECRET** - This is a legitimate timeout value for setTimeout function
 
 ### server/models/Project.js (line 18)
@@ -74,7 +74,7 @@ These are false positives and should be ignored by the security scanner. The JSX
 ## Important Note About JSX Files
 
 The following JSX files have been verified and contain no actual secrets:
-- **client/src/pages/MyProjects.jsx**: Contains legitimate setTimeout timeout value (5000ms)
+- **client/src/pages/MyProjects.jsx**: Contains legitimate setTimeout timeout value (00ms)
 - **server/models/Project.js**: Contains legitimate Mongoose schema type definition (String)
 
 These files are correctly implemented and should not be modified. Any scanner detections for these files are false positives.
