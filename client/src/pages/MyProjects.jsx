@@ -45,7 +45,7 @@ const MyProjects = () => {
         setLoading(false)
         return
       }
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/my-projects`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/my-projects`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -79,7 +79,7 @@ const MyProjects = () => {
         console.error('No session token available for deleting project')
         return
       }
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/${projectId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

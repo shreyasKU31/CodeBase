@@ -11,7 +11,7 @@ const webhookRoutes = require('./routes/webhooks');
 const { createClerkSupabaseClient } = require('./config/supabase');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 // Security middleware
 app.use(helmet());
@@ -25,7 +25,7 @@ app.use(limiter);
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL,
   credentials: true
 }));
 

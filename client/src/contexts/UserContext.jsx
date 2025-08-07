@@ -101,7 +101,7 @@ export const UserProvider = ({ children }) => {
         setLoading(false)
         return
       }
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -179,7 +179,7 @@ export const UserProvider = ({ children }) => {
         ...userData
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/sync`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,7 +236,7 @@ export const UserProvider = ({ children }) => {
         }
       })
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

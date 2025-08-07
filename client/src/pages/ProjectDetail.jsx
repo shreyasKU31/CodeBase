@@ -30,7 +30,7 @@ const ProjectDetail = () => {
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/${id}`)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}`)
       if (response.ok) {
         const data = await response.json()
         console.log('Project data:', data)
@@ -48,7 +48,7 @@ const ProjectDetail = () => {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/${id}/comments`)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/comments`)
       if (response.ok) {
         const data = await response.json()
         setComments(data)
@@ -74,7 +74,7 @@ const ProjectDetail = () => {
       }
       console.log('Token obtained:', !!token)
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/${id}/like`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -122,7 +122,7 @@ const ProjectDetail = () => {
       console.log('Attempting to post comment...')
       console.log('Token obtained for comment:', !!token)
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/${id}/comments`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

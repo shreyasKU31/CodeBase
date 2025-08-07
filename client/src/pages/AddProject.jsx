@@ -108,7 +108,7 @@ const AddProject = () => {
       })
 
       // 5. Make an authenticated API call to your backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

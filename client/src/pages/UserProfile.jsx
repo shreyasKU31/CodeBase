@@ -26,7 +26,7 @@ const UserProfile = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${username}`)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${username}`)
       if (response.ok) {
         const data = await response.json()
         setUser(data)
@@ -45,7 +45,7 @@ const UserProfile = () => {
     if (!username) return
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${username}/projects`)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${username}/projects`)
       if (response.ok) {
         const data = await response.json()
         setProjects(data)
