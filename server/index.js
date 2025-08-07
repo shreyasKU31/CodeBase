@@ -12,6 +12,7 @@ const { createClerkSupabaseClient } = require('./config/supabase');
 
 const app = express();
 const PORT = process.env.SERVER_PORT;
+const SERVER_URL = process.env.SERVER_URL;
 
 // Security middleware
 app.use(helmet());
@@ -115,4 +116,5 @@ app.use('*', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Server URL: ${SERVER_URL}`);
 });

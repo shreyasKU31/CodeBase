@@ -7,6 +7,7 @@ Create a `.env` file in the server directory with the following variables:
 ```env
 # Server Configuration
 SERVER_PORT=your_server_port
+SERVER_URL=your_backend_url
 CLIENT_URL=your_client_url
 
 # Supabase Configuration
@@ -15,6 +16,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 # Clerk Configuration
 CLERK_JWT_KEY=your_clerk_jwt_key_here
+CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret_here
 
 # Cloudinary Configuration (for image uploads)
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
@@ -33,7 +35,9 @@ VITE_SUPABASE_URL=your_supabase_url_here
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 # API Configuration
-VITE_API_URL=your_api_url_here
+VITE_API_URL=your_backend_url_here
+VITE_CLIENT_URL=your_frontend_url_here
+VITE_CLIENT_PORT=your_client_port_here
 ```
 
 ## Database Setup

@@ -56,6 +56,7 @@ cp server/env.example server/.env
 ```env
 # Server Configuration
 SERVER_PORT=your_server_port
+SERVER_URL=your_backend_url
 CLIENT_URL=your_client_url
 
 # Supabase Configuration
@@ -64,7 +65,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Clerk Configuration
 CLERK_JWT_KEY=your_clerk_jwt_key
-CLERK_ISSUER_URL=https://clerk.your-domain.com
+CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
 
 # Cloudinary Configuration
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
@@ -88,7 +89,9 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # API Configuration
-VITE_API_URL=your_api_url
+VITE_API_URL=your_backend_url
+VITE_CLIENT_URL=your_frontend_url
+VITE_CLIENT_PORT=your_client_port
 ```
 
 ### 4. Database Setup

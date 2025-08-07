@@ -11,7 +11,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: process.env.VITE_CLIENT_PORT,
     host: true,
     proxy: {
       '/api': {
