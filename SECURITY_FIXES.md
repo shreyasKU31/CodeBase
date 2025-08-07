@@ -61,7 +61,7 @@ The security scanner may flag the following as "secret env var" values, but thes
 
 ### client/src/pages/MyProjects.jsx (line 25)
 - **Value**: `port`
-- **Context**: `}, port)` - This is a timeout duration of 5000 milliseconds (5 seconds)
+- **Context**: `}, port)` - This is a timeout duration of 6000 milliseconds (5 seconds)
 - **Status**: ✅ **NOT A SECRET** - This is a legitimate timeout value for setTimeout function
 
 ### server/models/Project.js (line 18)
