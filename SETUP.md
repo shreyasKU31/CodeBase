@@ -6,8 +6,8 @@ Create a `.env` file in the server directory with the following variables:
 
 ```env
 # Server Configuration
-PORT=5000
-CLIENT_URL=http://localhost:5173
+PORT=your_server_port
+CLIENT_URL=your_client_url
 
 # Supabase Configuration
 SUPABASE_URL=your_supabase_url_here
@@ -25,7 +25,15 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 Create a `.env` file in the client directory:
 
 ```env
+# Clerk Configuration
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# API Configuration
+VITE_API_URL=your_api_url_here
 ```
 
 ## Database Setup
@@ -41,8 +49,8 @@ VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
    - **Publishable Key**: Copy to client `.env` as `VITE_CLERK_PUBLISHABLE_KEY`
    - **JWT Key**: Copy to server `.env` as `CLERK_JWT_KEY`
 3. **Configure your application**:
-   - Set your application URL to `http://localhost:5173`
-   - Add `http://localhost:5173/*` to allowed origins
+   - Set your application URL to your client URL
+   - Add your client URL to allowed origins
 
 ## Cloudinary Setup (Optional)
 

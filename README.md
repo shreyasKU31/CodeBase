@@ -55,8 +55,8 @@ cp server/env.example server/.env
 
 ```env
 # Server Configuration
-PORT=5000
-CLIENT_URL=http://localhost:5173
+PORT=your_server_port
+CLIENT_URL=your_client_url
 
 # Supabase Configuration
 SUPABASE_URL=your_supabase_url
@@ -73,15 +73,22 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 #### Client Environment Variables
-Copy `client/env.example` to `client/.env` and fill in your values:
+Copy `client/.env.example` to `client/.env` and fill in your values:
 
 ```bash
-cp client/env.example client/.env
+cp client/.env.example client/.env
 ```
 
 ```env
 # Clerk Configuration
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# API Configuration
+VITE_API_URL=your_api_url
 ```
 
 ### 4. Database Setup
@@ -229,7 +236,7 @@ CREATE POLICY "Users can delete own comments" ON project_comments FOR DELETE USI
 npm run dev
 ```
 
-This will start both the backend server (port 5000) and frontend development server (port 5173).
+This will start both the backend server and frontend development server.
 
 ## 📁 Project Structure
 

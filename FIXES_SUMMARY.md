@@ -20,7 +20,7 @@
 ### 2. API Endpoint URL Issues
 **Problem**: Frontend was using relative URLs (`/api/...`) instead of full server URLs.
 
-**Solution**: Updated all API calls to use the full server URL (`http://localhost:5000/api/...`)
+**Solution**: Updated all API calls to use environment variables for server URL
 
 **Files Modified**:
 - `client/src/pages/MyProjects.jsx` - Fixed API endpoints

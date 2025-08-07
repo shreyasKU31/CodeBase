@@ -17,7 +17,7 @@ const Dashboard = () => {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/projects/discover')
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/projects/discover`)
       if (response.ok) {
         const data = await response.json()
         // Sort projects by like count (highest first)
